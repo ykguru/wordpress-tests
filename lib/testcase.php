@@ -1,12 +1,19 @@
 <?php
 class WP_UnitTestCase extends PHPUnit_Framework_TestCase {
 
+	private $auto_increment_id = null;
+
 	function setUp() {
 		global $wpdb;
 		$wpdb->suppress_errors = false;
 		$wpdb->show_errors = true;
 		$wpdb->db_connect();
 		ini_set('display_errors', 1 );
+
+		$query = $wpdb->prepare("SHOW TABLE STATUS LIKE '{$wpdb->posts}'");
+		$result = $wpdb->get_row($query);
+		$this->auto_increment_id = $result->Auto_increment;
+
 		$this->clean_up_global_scope();
 		$this->start_transaction();
 	}
@@ -14,7 +21,9 @@ class WP_UnitTestCase extends PHPUnit_Framework_TestCase {
 	function tearDown() {
 		global $wpdb;
 		$wpdb->query( 'ROLLBACK' );
+		$wpdb->query("ALTER TABLE `{$wpdb->posts}` AUTO_INCREMENT={$this->auto_increment_id}");
 	}
+
 
 	function clean_up_global_scope() {
 		$_GET = array();
